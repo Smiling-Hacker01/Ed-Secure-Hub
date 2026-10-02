@@ -1,0 +1,81 @@
+import { Pool, QueryResult, QueryResultRow } from 'pg';
+
+let pool: Pool | null = null;
+
+export function getPostgresPool(): Pool | null {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+
+  if (!pool) {
+    pool = new Pool({
+      connectionString: url,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    });
+
+    pool.on('error', (err) => {
+      console.error('Unexpected error on PostgreSQL pool client:', err);
+    });
+  }
+
+  return pool;
+}
+
+export async function queryPostgres<T extends QueryResultRow = any>(
+  text: string,
+  params?: any[]
+): Promise<QueryResult<T> | null> {
+  const p = getPostgresPool();
+  if (!p) return null;
+
+  const client = await p.connect();
+  try {
+    return await client.query<T>(text, params);
+  } finally {
+    client.release();
+  }
+}
+
+export async function testPostgresConnection(): Promise<{
+  ok: boolean;
+  database?: string;
+  timestamp?: string;
+  tableCount?: number;
+  message: string;
+}> {
+  const p = getPostgresPool();
+  if (!p) {
+    return {
+      ok: false,
+      message: 'DATABASE_URL is not configured in .env or environment variables.',
+    };
+  }
+
+  try {
+    const client = await p.connect();
+    try {
+      const dbInfo = await client.query(
+        'SELECT current_database() as db_name, NOW() as current_time'
+      );
+      const tables = await client.query(
+        "SELECT count(*) as count FROM information_schema.tables WHERE table_schema = 'public'"
+      );
+
+      return {
+        ok: true,
+        database: dbInfo.rows[0]?.db_name,
+        timestamp: dbInfo.rows[0]?.current_time,
+        tableCount: parseInt(tables.rows[0]?.count || '0', 10),
+        message: `Successfully connected to PostgreSQL database '${dbInfo.rows[0]?.db_name}'. Found ${tables.rows[0]?.count} tables.`,
+      };
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    return {
+      ok: false,
+      message: `Failed to connect to PostgreSQL: ${err.message}`,
+    };
+  }
+}

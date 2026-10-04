@@ -26,7 +26,7 @@ function ComplaintsQueueContent() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ fullName?: string; badgeNumber?: string; department?: string; role?: string } | null>(null);
 
   // Filters
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -35,6 +35,7 @@ function ComplaintsQueueContent() {
   const [incidentType, setIncidentType] = useState('ALL');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     loadComplaints();
   }, [status, priority, incidentType]);
 

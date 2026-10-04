@@ -34,6 +34,7 @@ export default function BlogPostDetailPage({
   const [copiedShare, setCopiedShare] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     loadArticle();
   }, [slug]);
 

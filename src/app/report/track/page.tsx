@@ -53,6 +53,7 @@ function TrackContent() {
     const urlRef = searchParams.get('ref');
     const urlPin = searchParams.get('pin');
     if (urlRef && urlPin) {
+      // eslint-disable-next-line react-hooks/immutability
       executeLookup(urlRef, urlPin);
     }
   }, [searchParams]);

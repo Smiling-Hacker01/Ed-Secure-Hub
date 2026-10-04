@@ -57,7 +57,7 @@ export function HeroSection() {
               }}
             >
               Targeted by an Online Scam? <br />
-              <span className="text-gradient-cyan">We're Here to Help.</span>
+              <span className="text-gradient-cyan">We&apos;re Here to Help.</span>
             </h1>
 
             <p

@@ -22,9 +22,9 @@ export function getPostgresPool(): Pool | null {
   return pool;
 }
 
-export async function queryPostgres<T extends QueryResultRow = any>(
+export async function queryPostgres<T extends QueryResultRow = QueryResultRow>(
   text: string,
-  params?: any[]
+  params?: unknown[]
 ): Promise<QueryResult<T> | null> {
   const p = getPostgresPool();
   if (!p) return null;
@@ -72,10 +72,10 @@ export async function testPostgresConnection(): Promise<{
     } finally {
       client.release();
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       ok: false,
-      message: `Failed to connect to PostgreSQL: ${err.message}`,
+      message: `Failed to connect to PostgreSQL: ${err instanceof Error ? err.message : String(err)}`,
     };
   }
 }

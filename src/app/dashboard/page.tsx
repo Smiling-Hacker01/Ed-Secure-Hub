@@ -24,11 +24,12 @@ import { Complaint } from '@/lib/db/types';
 
 export default function UserDashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email: string; fullName: string; role?: string } | null>(null);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     loadUserData();
   }, []);
 

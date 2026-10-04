@@ -86,9 +86,9 @@ async function main() {
     client.release();
     await pool.end();
     console.log('\n✨ Database diagnostic complete. Everything is operational.');
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('\n❌ Could not connect to PostgreSQL:');
-    console.error(`   ${err.message}`);
+    console.error(`   ${err instanceof Error ? err.message : String(err)}`);
     console.log('\n💡 Troubleshooting Tips:');
     console.log('   1. Check if the Docker container is running: `docker ps`');
     console.log('   2. Start it using: `docker compose up -d postgres`');

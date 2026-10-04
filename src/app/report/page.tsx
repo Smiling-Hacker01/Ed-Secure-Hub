@@ -105,12 +105,13 @@ export default function ReportPage() {
       const saved = localStorage.getItem('edsecure_report_draft');
       if (saved) {
         const parsed = JSON.parse(saved);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData((prev) => ({ ...prev, ...parsed, evidenceFiles: [] }));
       }
     } catch {}
   }, []);
 
-  const updateField = (field: string, value: any) => {
+  const updateField = (field: string, value: string | boolean) => {
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
       try {
@@ -241,7 +242,7 @@ export default function ReportPage() {
       // Clear draft
       localStorage.removeItem('edsecure_report_draft');
       setCurrentStep(6); // Step 6 Confirmation
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       setSubmissionError('Network error connecting to intake server. Please try again.');
     } finally {

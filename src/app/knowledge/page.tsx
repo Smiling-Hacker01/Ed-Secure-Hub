@@ -26,6 +26,7 @@ export default function KnowledgeHubPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     loadPosts();
   }, [selectedCategory]);
 

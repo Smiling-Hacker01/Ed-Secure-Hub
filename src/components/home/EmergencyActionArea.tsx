@@ -85,7 +85,7 @@ export function EmergencyActionArea() {
               Immediate Assistance
             </span>
             <h2 style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.85rem)', color: '#F8FAFC', marginTop: '0.2rem' }}>
-              What to Do If You've Been Scammed
+              What to Do If You&apos;ve Been Scammed
             </h2>
           </div>
 

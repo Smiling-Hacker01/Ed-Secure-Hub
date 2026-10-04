@@ -40,6 +40,7 @@ export function IncidentMapSection() {
   const [locationStatus, setLocationStatus] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     fetchStations();
   }, []);
 
@@ -344,7 +345,7 @@ export function IncidentMapSection() {
                   fontSize: '0.85rem',
                 }}
               >
-                No cyber stations matched your search. Try searching for "Delhi", "Mumbai", or click "All India".
+                No cyber stations matched your search. Try searching for &quot;Delhi&quot;, &quot;Mumbai&quot;, or click &quot;All India&quot;.
               </div>
             ) : (
               filteredStations.map((st) => {

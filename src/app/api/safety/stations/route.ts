@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     const stations = await db.getCyberStations();
 
-    let formattedStations = stations.map((s) => {
+    const formattedStations = stations.map((s) => {
       const distanceKm = hasCoordinates
         ? calculateDistanceKm(userLat, userLng, s.latitude, s.longitude)
         : null;

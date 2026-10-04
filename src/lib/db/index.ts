@@ -53,7 +53,7 @@ class DatabaseRepository {
       if (fs.existsSync(DATA_FILE)) {
         const fileContent = fs.readFileSync(DATA_FILE, 'utf-8');
         const parsed = JSON.parse(fileContent);
-        const hasIndianStations = parsed.cyberStations && parsed.cyberStations.some((s: any) => s.state === 'Delhi' || s.state === 'Maharashtra');
+        const hasIndianStations = parsed.cyberStations && parsed.cyberStations.some((s: { state?: string }) => s.state === 'Delhi' || s.state === 'Maharashtra');
         return {
           users: parsed.users || [...SEED_USERS],
           complaints: parsed.complaints || [...SEED_COMPLAINTS],

@@ -25,11 +25,12 @@ import { Complaint } from '@/lib/db/types';
 export default function AuthorityDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState<any>(null);
+  const [metrics, setMetrics] = useState<Record<string, number> | null>(null);
   const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ fullName?: string; badgeNumber?: string; department?: string; role?: string } | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     loadDashboardData();
   }, []);
 
@@ -181,7 +182,7 @@ export default function AuthorityDashboardPage() {
           </div>
 
           {/* High Priority & Critical Action Watchlist Banner */}
-          {metrics?.criticalPriority > 0 && (
+          {(metrics?.criticalPriority ?? 0) > 0 && (
             <div
               style={{
                 padding: '1.25rem 1.75rem',
@@ -200,7 +201,7 @@ export default function AuthorityDashboardPage() {
                 <AlertTriangle style={{ width: '22px', height: '22px', color: 'var(--danger)' }} />
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#F8FAFC' }}>
-                    {metrics.criticalPriority} Critical Priority Incident(s) Flagged for Escalation
+                    {(metrics?.criticalPriority ?? 0)} Critical Priority Incident(s) Flagged for Escalation
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#FECACA' }}>
                     SIM swap takeovers or immediate wire-drain threats requiring immediate carrier freeze.

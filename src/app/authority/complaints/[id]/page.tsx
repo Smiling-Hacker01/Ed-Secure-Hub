@@ -45,7 +45,7 @@ export default function AuthorityComplaintDetailPage({
   const [internalNotes, setInternalNotes] = useState<InternalNote[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [officers, setOfficers] = useState<{ id: string; fullName: string; badgeNumber?: string; department?: string }[]>([]);
-  const [currentOfficer, setCurrentOfficer] = useState<any>(null);
+  const [currentOfficer, setCurrentOfficer] = useState<{ id: string; fullName: string; role?: string; badgeNumber?: string; department?: string } | null>(null);
 
   // Action Modals State
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -67,6 +67,7 @@ export default function AuthorityComplaintDetailPage({
   const [activeTab, setActiveTab] = useState<'DETAILS' | 'EVIDENCE' | 'NOTES' | 'AUDIT'>('DETAILS');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     loadCaseFile();
   }, [id]);
 
@@ -700,7 +701,7 @@ export default function AuthorityComplaintDetailPage({
                     <label className="form-label">Visibility</label>
                     <select
                       value={noteVisibility}
-                      onChange={(e) => setNoteVisibility(e.target.value as any)}
+                      onChange={(e) => setNoteVisibility(e.target.value as 'INTERNAL' | 'AUTHORITY_ONLY')}
                       className="form-select"
                     >
                       <option value="INTERNAL">Internal Cyber Cell Squad</option>

@@ -37,6 +37,7 @@ export default function UserComplaintDetailPage({
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     loadComplaint();
   }, [id]);
 

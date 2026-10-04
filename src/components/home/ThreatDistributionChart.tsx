@@ -26,7 +26,6 @@ export function ThreatDistributionChart() {
 
   const radius = 64;
   const circumference = 2 * Math.PI * radius;
-  let accumulatedShare = 0;
 
   return (
     <div
@@ -85,10 +84,10 @@ export function ThreatDistributionChart() {
                 stroke="rgba(255, 255, 255, 0.05)"
                 strokeWidth="18"
               />
-              {THREAT_DATA.map((t) => {
+              {THREAT_DATA.map((t, index) => {
                 const strokeDasharray = `${(t.share / 100) * circumference} ${circumference}`;
+                const accumulatedShare = THREAT_DATA.slice(0, index).reduce((total, item) => total + item.share, 0);
                 const strokeDashoffset = -((accumulatedShare / 100) * circumference);
-                accumulatedShare += t.share;
                 const isSelected = selected.id === t.id;
 
                 return (

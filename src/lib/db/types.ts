@@ -79,6 +79,8 @@ export interface EvidenceItem {
   notes?: string;
   is_verified: boolean;
   signed_url?: string;
+  /** Upload bytes for persistence; omitted from API responses. */
+  file_data?: Buffer;
   created_at: string;
 }
 

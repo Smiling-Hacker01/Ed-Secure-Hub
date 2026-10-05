@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "tsx scripts/test-platform.ts",
     "db:check": "tsx scripts/db-connect.ts",
-    "setup:officers": "node scripts/setup-officers.mjs"
+    "db:schema": "node scripts/db-schema.mjs",
+    "setup:officers": "node scripts/setup-officers.mjs",
+    "db:migrate-json": "node scripts/migrate-json-to-postgres.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

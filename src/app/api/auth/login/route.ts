@@ -32,10 +32,7 @@ export async function POST(req: NextRequest) {
 
     const isMatch = await verifyPassword(password, user.password_hash);
     if (!isMatch) {
-      // Check fallback test password if hash differs in demo
-      if (password !== 'CyberSecure@2026') {
-        return errorResponse('INVALID_CREDENTIALS', 'Invalid email or password.', 401);
-      }
+      return errorResponse('INVALID_CREDENTIALS', 'Invalid email or password.', 401);
     }
 
     const token = await createSessionToken({

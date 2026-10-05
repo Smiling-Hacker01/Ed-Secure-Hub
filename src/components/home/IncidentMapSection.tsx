@@ -64,30 +64,48 @@ export function IncidentMapSection() {
   };
 
   const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationStatus('Geolocation is not supported. Please select your city from the list below.');
-      return;
-    }
-
     setLoadingLocation(true);
     setLocationStatus('Locating your device...');
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setLocationActive(true);
-        setLoadingLocation(false);
-        setLocationStatus('Nearest cyber cell identified based on your GPS coordinates.');
-        fetchStations(latitude, longitude);
-      },
-      () => {
+    const onGPSSuccess = (pos: GeolocationPosition) => {
+      const { latitude, longitude } = pos.coords;
+      setLocationActive(true);
+      setLoadingLocation(false);
+      setLocationStatus('Nearest cyber cell identified via GPS.');
+      fetchStations(latitude, longitude);
+    };
+
+    const onGPSFail = async () => {
+      // Fallback: IP-based geolocation (free, no key needed)
+      setLocationStatus('GPS unavailable — using IP location...');
+      try {
+        const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          setLocationActive(true);
+          setLoadingLocation(false);
+          setLocationStatus(`Approximate location: ${data.city || data.region || 'your area'} — sorted by distance.`);
+          fetchStations(data.latitude, data.longitude);
+        } else {
+          throw new Error('No coords from IP');
+        }
+      } catch {
         setLoadingLocation(false);
         setLocationActive(false);
-        setLocationStatus('Location access was not provided. Showing all verified regional cyber cells.');
+        setLocationStatus('Could not determine location. Select a city below or search by name.');
         fetchStations();
-      },
-      { timeout: 8000, enableHighAccuracy: false }
-    );
+      }
+    };
+
+    if (!navigator.geolocation) {
+      onGPSFail();
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(onGPSSuccess, onGPSFail, {
+      timeout: 8000,
+      enableHighAccuracy: false,
+    });
   };
 
   const handleResetLocation = () => {

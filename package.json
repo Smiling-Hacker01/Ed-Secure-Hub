@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx scripts/test-platform.ts",
-    "db:check": "tsx scripts/db-connect.ts"
+    "db:check": "tsx scripts/db-connect.ts",
+    "setup:officers": "node scripts/setup-officers.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -2,6 +2,8 @@ import { User, Complaint, EvidenceItem, ComplaintStatusHistory, InternalNote, Au
 import bcrypt from 'bcryptjs';
 
 // Precomputed password hash for default test accounts: 'CyberSecure@2026'
+// NOTE: Real officer/director accounts are managed via the admin API or
+// directly seeded into the live .data store — never hardcode real credentials here.
 export const DEFAULT_PASSWORD_HASH = bcrypt.hashSync('CyberSecure@2026', 10);
 
 export const SEED_USERS: User[] = [
@@ -69,6 +71,9 @@ export const SEED_USERS: User[] = [
     created_at: '2026-09-12T11:45:00Z',
     updated_at: '2026-09-12T11:45:00Z',
   },
+  // NOTE: Real officer/director accounts (Vishal, Raghvendra) are NOT seeded here.
+  // They live only in .data/edsecure_store.json (gitignored) or the production DB.
+  // To re-create them, run: npm run setup:officers
 ];
 
 export const SEED_COMPLAINTS: Complaint[] = [

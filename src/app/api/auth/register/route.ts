@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password, fullName, phone, role, badgeNumber, department } = parsed.data;
+    const { email, password, fullName, phone } = parsed.data;
 
     const existingUser = await db.findUserByEmail(email);
     if (existingUser) {
@@ -33,17 +33,12 @@ export async function POST(req: NextRequest) {
     // Hash password securely
     const password_hash = await hashPassword(password);
 
-    // Standard public registrations default to USER. Only ADMIN can promote to AUTHORITY or explicit test roles
-    const safeRole = role === 'AUTHORITY' ? 'AUTHORITY' : 'USER';
-
     const newUser = await db.createUser({
       email,
       password_hash,
       full_name: fullName,
       phone: phone || undefined,
-      role: safeRole,
-      badge_number: badgeNumber || undefined,
-      department: department || undefined,
+      role: 'USER',
       is_active: true,
       mfa_enabled: false,
     });

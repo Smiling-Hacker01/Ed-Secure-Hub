@@ -105,6 +105,8 @@ CREATE INDEX IF NOT EXISTS idx_complaints_priority ON complaints(priority);
 CREATE INDEX IF NOT EXISTS idx_complaints_assigned_to ON complaints(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_complaints_created_at ON complaints(created_at DESC);
 
+ALTER TABLE complaints ADD COLUMN IF NOT EXISTS assigned_officer_name VARCHAR(150);
+
 -- 3. Evidence Table
 CREATE TABLE IF NOT EXISTS evidence (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -123,6 +125,9 @@ CREATE TABLE IF NOT EXISTS evidence (
 
 CREATE INDEX IF NOT EXISTS idx_evidence_complaint_id ON evidence(complaint_id);
 
+ALTER TABLE evidence ADD COLUMN IF NOT EXISTS signed_url TEXT;
+ALTER TABLE evidence ADD COLUMN IF NOT EXISTS file_data BYTEA;
+
 -- 4. Status History (Immutable Timeline)
 CREATE TABLE IF NOT EXISTS complaint_status_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -138,6 +143,8 @@ CREATE TABLE IF NOT EXISTS complaint_status_history (
 CREATE INDEX IF NOT EXISTS idx_status_history_complaint_id ON complaint_status_history(complaint_id);
 CREATE INDEX IF NOT EXISTS idx_status_history_created_at ON complaint_status_history(created_at ASC);
 
+ALTER TABLE complaint_status_history ADD COLUMN IF NOT EXISTS changed_by_name VARCHAR(150);
+
 -- 5. Internal Officer Notes
 CREATE TABLE IF NOT EXISTS internal_notes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -149,6 +156,9 @@ CREATE TABLE IF NOT EXISTS internal_notes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_internal_notes_complaint_id ON internal_notes(complaint_id);
+
+ALTER TABLE internal_notes ADD COLUMN IF NOT EXISTS author_name VARCHAR(150);
+ALTER TABLE internal_notes ADD COLUMN IF NOT EXISTS author_badge VARCHAR(50);
 
 -- 6. Audit Events (Tamper-evident system log)
 CREATE TABLE IF NOT EXISTS audit_events (
@@ -167,6 +177,8 @@ CREATE TABLE IF NOT EXISTS audit_events (
 
 CREATE INDEX IF NOT EXISTS idx_audit_events_entity ON audit_events(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_events_created_at ON audit_events(created_at DESC);
+
+ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS actor_name VARCHAR(150);
 
 -- 7. Knowledge Hub / Blog Posts
 CREATE TABLE IF NOT EXISTS blog_posts (

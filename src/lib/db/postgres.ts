@@ -1,4 +1,4 @@
-import { Pool, QueryResult, QueryResultRow } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 
 let pool: Pool | null = null;
 
@@ -7,8 +7,26 @@ export function getPostgresPool(): Pool | null {
   if (!url) return null;
 
   if (!pool) {
+    const ca = process.env.DATABASE_SSL_CA_BASE64;
+    let connectionString = url;
+    const ssl = ca
+      ? { ca: Buffer.from(ca, 'base64').toString('utf8'), rejectUnauthorized: true }
+      : undefined;
+
+    // When an explicit CA is provided, avoid connection-string SSL settings
+    // replacing the TLS options supplied above.
+    if (ssl) {
+      const parsedUrl = new URL(url);
+      parsedUrl.searchParams.delete('sslmode');
+      parsedUrl.searchParams.delete('sslrootcert');
+      parsedUrl.searchParams.delete('sslcert');
+      parsedUrl.searchParams.delete('sslkey');
+      connectionString = parsedUrl.toString();
+    }
+
     pool = new Pool({
-      connectionString: url,
+      connectionString,
+      ssl,
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
@@ -32,6 +50,26 @@ export async function queryPostgres<T extends QueryResultRow = QueryResultRow>(
   const client = await p.connect();
   try {
     return await client.query<T>(text, params);
+  } finally {
+    client.release();
+  }
+}
+
+export async function withPostgresTransaction<T>(
+  work: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const p = getPostgresPool();
+  if (!p) throw new Error('DATABASE_URL is required for PostgreSQL transactions.');
+
+  const client = await p.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await work(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
   } finally {
     client.release();
   }

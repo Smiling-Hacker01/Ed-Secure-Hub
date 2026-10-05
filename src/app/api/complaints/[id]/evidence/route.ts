@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth/session';
 import { successResponse, errorResponse, validateEvidenceFile, calculateHash } from '@/lib/utils/security';
@@ -56,6 +56,7 @@ export async function POST(
       size_bytes: file.size,
       storage_path: storagePath,
       sha256_hash,
+      file_data: buffer,
       uploaded_by: session?.userId,
       notes: notes || undefined,
       is_verified: true,
@@ -109,6 +110,21 @@ export async function GET(
 
     if (!isAuthority && !isOwner) {
       return errorResponse('FORBIDDEN', 'Access to evidence vault denied.', 403);
+    }
+
+    const fileId = req.nextUrl.searchParams.get('fileId');
+    if (fileId) {
+      const file = await db.getEvidenceFile(complaint.id, fileId);
+      if (!file) return errorResponse('NOT_FOUND', 'Evidence file not found.', 404);
+      const safeName = file.original_name.replace(/[\r\n"\\]/g, '_');
+      return new NextResponse(new Uint8Array(file.file_data), {
+        headers: {
+          'Content-Type': file.mime_type,
+          'Content-Disposition': `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(file.original_name)}`,
+          'Cache-Control': 'private, no-store',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      });
     }
 
     const evidence = await db.getEvidenceByComplaintId(complaint.id);

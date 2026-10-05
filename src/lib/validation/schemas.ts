@@ -9,9 +9,6 @@ export const registerSchema = z.object({
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
   phone: z.string().optional(),
-  role: z.enum(['USER', 'AUTHORITY', 'ADMIN']).default('USER'),
-  badgeNumber: z.string().optional(),
-  department: z.string().optional(),
 });
 
 export const loginSchema = z.object({

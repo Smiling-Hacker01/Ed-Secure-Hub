@@ -1,96 +1,129 @@
 #!/usr/bin/env node
 /**
- * setup-officers.mjs
- * -------------------
- * Creates real officer/director accounts from environment variables.
- * Run with: npm run setup:officers
- *
- * Required env vars (set in .env.local — NEVER commit real passwords to git):
- *   OFFICER_EMAIL, OFFICER_PASSWORD, OFFICER_NAME, OFFICER_BADGE, OFFICER_DEPT
- *   DIRECTOR_EMAIL, DIRECTOR_PASSWORD, DIRECTOR_NAME, DIRECTOR_BADGE, DIRECTOR_DEPT
- *
- * Falls back to defaults if env vars are not set (development only).
+ * Creates or refreshes authority accounts from environment variables.
+ * Set OFFICER_* and DIRECTOR_* values in .env.local before running.
+ * Uses DATABASE_URL when set; otherwise it updates the local .data store.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
 import bcrypt from 'bcryptjs';
+import pg from 'pg';
 
-// Load .env.local manually (Next.js doesn't load it for plain node scripts)
+const { Pool } = pg;
 const envPath = path.resolve(process.cwd(), '.env.local');
 if (fs.existsSync(envPath)) {
-  const lines = fs.readFileSync(envPath, 'utf-8').split('\n');
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eqIdx = trimmed.indexOf('=');
-    if (eqIdx === -1) continue;
-    const key = trimmed.slice(0, eqIdx).trim();
-    const val = trimmed.slice(eqIdx + 1).trim();
-    if (!process.env[key]) process.env[key] = val;
+  for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+    if (!match || match[1] in process.env) continue;
+    const value = match[2].replace(/^(['"])(.*)\1$/, '$2');
+    process.env[match[1]] = value;
   }
 }
 
-const DATA_DIR  = path.resolve(process.cwd(), '.data');
-const DATA_FILE = path.join(DATA_DIR, 'edsecure_store.json');
-
-if (!fs.existsSync(DATA_FILE)) {
-  console.error('❌  .data/edsecure_store.json not found. Start the dev server once first.');
+const required = [
+  'OFFICER_EMAIL', 'OFFICER_PASSWORD', 'OFFICER_NAME', 'OFFICER_BADGE', 'OFFICER_DEPT',
+  'DIRECTOR_EMAIL', 'DIRECTOR_PASSWORD', 'DIRECTOR_NAME', 'DIRECTOR_BADGE', 'DIRECTOR_DEPT',
+];
+const missing = required.filter((key) => !process.env[key]);
+if (missing.length) {
+  console.error(`Missing required account settings: ${missing.join(', ')}`);
   process.exit(1);
 }
 
-const store = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-
-const officers = [
+const accounts = [
   {
-    id:           'f5eebc99-9c0b-4ef8-bb6d-6bb9bd380b01',
-    email:        process.env.OFFICER_EMAIL    || 'kushwahavishal311@gmail.com',
-    password:     process.env.OFFICER_PASSWORD || 'Vishal@9918',
-    full_name:    process.env.OFFICER_NAME     || 'Vishal Singh Kushwaha',
-    badge_number: process.env.OFFICER_BADGE    || 'CC-7731',
-    department:   process.env.OFFICER_DEPT     || 'Cyber Crime Investigation Unit',
-    role:         'AUTHORITY',
+    email: process.env.OFFICER_EMAIL.trim().toLowerCase(),
+    password: process.env.OFFICER_PASSWORD,
+    full_name: process.env.OFFICER_NAME,
+    badge_number: process.env.OFFICER_BADGE,
+    department: process.env.OFFICER_DEPT,
+    role: 'AUTHORITY',
   },
   {
-    id:           'g6eebc99-9c0b-4ef8-bb6d-6bb9bd380b02',
-    email:        process.env.DIRECTOR_EMAIL    || 'raghvendrasingh311@gmail.com',
-    password:     process.env.DIRECTOR_PASSWORD || 'Raghvendra@9918',
-    full_name:    process.env.DIRECTOR_NAME     || 'Raghvendra Singh Kushwaha',
-    badge_number: process.env.DIRECTOR_BADGE    || 'DIR-311',
-    department:   process.env.DIRECTOR_DEPT     || 'Cybercrime Directorate, Special Operations',
-    role:         'ADMIN',
+    email: process.env.DIRECTOR_EMAIL.trim().toLowerCase(),
+    password: process.env.DIRECTOR_PASSWORD,
+    full_name: process.env.DIRECTOR_NAME,
+    badge_number: process.env.DIRECTOR_BADGE,
+    department: process.env.DIRECTOR_DEPT,
+    role: 'ADMIN',
   },
 ];
 
-let added = 0;
-for (const o of officers) {
-  const exists = store.users.find(u => u.email === o.email);
-  if (exists) {
-    console.log(`ℹ️  ${o.email} already exists — skipping.`);
-    continue;
+if (process.env.DATABASE_URL) {
+  const ca = process.env.DATABASE_SSL_CA_BASE64;
+  let connectionString = process.env.DATABASE_URL;
+  const ssl = ca
+    ? { ca: Buffer.from(ca, 'base64').toString('utf8'), rejectUnauthorized: true }
+    : undefined;
+  if (ssl) {
+    const parsedUrl = new URL(connectionString);
+    parsedUrl.searchParams.delete('sslmode');
+    parsedUrl.searchParams.delete('sslrootcert');
+    parsedUrl.searchParams.delete('sslcert');
+    parsedUrl.searchParams.delete('sslkey');
+    connectionString = parsedUrl.toString();
   }
-  store.users.push({
-    id:             o.id,
-    email:          o.email,
-    password_hash:  bcrypt.hashSync(o.password, 10),
-    full_name:      o.full_name,
-    phone:          '',
-    role:           o.role,
-    badge_number:   o.badge_number,
-    department:     o.department,
-    is_active:      true,
-    mfa_enabled:    o.role === 'ADMIN',
-    created_at:     new Date().toISOString(),
-    updated_at:     new Date().toISOString(),
-  });
-  console.log(`✅  Created ${o.role}: ${o.full_name} <${o.email}> [${o.badge_number}]`);
-  added++;
-}
-
-if (added > 0) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2));
-  console.log(`\n💾  Saved. Total users: ${store.users.length}`);
+  const pool = new Pool({ connectionString, ssl, max: 1 });
+  try {
+    for (const account of accounts) {
+      const passwordHash = await bcrypt.hash(account.password, 10);
+      await pool.query(
+        `INSERT INTO users (
+          email, password_hash, full_name, role, badge_number, department,
+          is_active, mfa_enabled
+        ) VALUES ($1, $2, $3, $4, $5, $6, TRUE, $7)
+        ON CONFLICT (email) DO UPDATE SET
+          password_hash = EXCLUDED.password_hash,
+          full_name = EXCLUDED.full_name,
+          role = EXCLUDED.role,
+          badge_number = EXCLUDED.badge_number,
+          department = EXCLUDED.department,
+          is_active = TRUE,
+          updated_at = CURRENT_TIMESTAMP`,
+        [
+          account.email,
+          passwordHash,
+          account.full_name,
+          account.role,
+          account.badge_number,
+          account.department,
+          account.role === 'ADMIN',
+        ]
+      );
+      console.log(`Provisioned ${account.role} account ${account.email} in PostgreSQL.`);
+    }
+  } finally {
+    await pool.end();
+  }
 } else {
-  console.log('\nNo changes made.');
+  const dataFile = path.resolve(process.cwd(), '.data', 'edsecure_store.json');
+  if (!fs.existsSync(dataFile)) {
+    console.error('No DATABASE_URL is configured and .data/edsecure_store.json does not exist.');
+    process.exit(1);
+  }
+
+  const store = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+  for (const account of accounts) {
+    const existing = store.users.find((user) => user.email.toLowerCase() === account.email);
+    const now = new Date().toISOString();
+    const user = {
+      id: existing?.id || crypto.randomUUID(),
+      email: account.email,
+      password_hash: await bcrypt.hash(account.password, 10),
+      full_name: account.full_name,
+      phone: existing?.phone || '',
+      role: account.role,
+      badge_number: account.badge_number,
+      department: account.department,
+      is_active: true,
+      mfa_enabled: account.role === 'ADMIN',
+      created_at: existing?.created_at || now,
+      updated_at: now,
+    };
+    if (existing) Object.assign(existing, user);
+    else store.users.push(user);
+    console.log(`Provisioned ${account.role} account ${account.email} in local storage.`);
+  }
+  fs.writeFileSync(dataFile, JSON.stringify(store, null, 2));
 }

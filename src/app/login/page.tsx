@@ -5,52 +5,53 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { Lock, AlertCircle, Bot, ChevronRight, UserCheck, AlertTriangle, HelpCircle, X } from 'lucide-react';
+import { Lock, AlertCircle, Bot, ChevronRight, UserCheck, HelpCircle, X } from 'lucide-react';
 
 /* ─── Guide step types ─────────────────────────────────────── */
 type Step = {
   bot: string;
   options?: { label: string; next: string }[];
-  action?: 'register-citizen' | 'register-victim' | 'login' | 'report-anon';
+  action?: 'register-citizen' | 'register-victim' | 'login' | 'explore';
 };
 
 const GUIDE_STEPS: Record<string, Step> = {
   start: {
-    bot: "Hi! I'm your EdSecure guide. Were you directly targeted by cyber fraud or financial crime?",
+    bot: "Not sure where to start? Were you directly targeted by cyber fraud — did you lose money or have your accounts compromised?",
     options: [
-      { label: '✅ Yes — I lost money or was directly targeted', next: 'victim' },
-      { label: '🔍 No — I want to report something or stay informed', next: 'citizen' },
-      { label: '🔑 I already have an account', next: 'has-account' },
+      { label: 'Yes, I was directly affected', next: 'victim' },
+      { label: 'No, I want to report something suspicious', next: 'citizen' },
+      { label: 'I already have an account', next: 'has-account' },
+      { label: 'Just looking around for now', next: 'browse' },
     ],
   },
   victim: {
-    bot: "Register as a **Victim**. You get a tracked case file, an assigned investigator, and real-time status updates on your complaint.",
+    bot: "Register as a Victim. You get a tracked case file, a dedicated investigator assigned to you, and real-time updates as your complaint progresses.",
     options: [
-      { label: '📋 Register as Victim', next: 'victim-go' },
-      { label: '⚡ File anonymously (no account needed)', next: 'anon-report' },
+      { label: 'Register as Victim', next: 'victim-go' },
+      { label: 'Not ready yet — let me explore first', next: 'browse' },
     ],
   },
   'victim-go': {
-    bot: "Great! On the registration form, choose **'Victim / Affected Person'** when prompted.",
+    bot: "On the registration form, select **Victim / Affected Person** when asked about your role. Takes under 3 minutes.",
     action: 'register-victim',
   },
   citizen: {
-    bot: "Register as a **Citizen**. Report suspicious activity, submit tips, and monitor public safety alerts without being personally affected.",
+    bot: "Register as a Citizen. You can submit tips, report suspicious activity, and follow public safety alerts — even if you weren't personally targeted.",
     options: [
-      { label: '🧑 Register as Citizen', next: 'citizen-go' },
-      { label: '⚡ File anonymously (no account needed)', next: 'anon-report' },
+      { label: 'Register as Citizen', next: 'citizen-go' },
+      { label: 'Not ready yet — let me explore first', next: 'browse' },
     ],
   },
   'citizen-go': {
-    bot: "Perfect! Choose **'Citizen / Concerned Individual'** on the registration page.",
+    bot: "On the registration form, select **Citizen / Concerned Individual** when asked about your role.",
     action: 'register-citizen',
   },
-  'anon-report': {
-    bot: "You can submit without an account. You'll receive a **4-digit PIN** to track your case anonymously at any time.",
-    action: 'report-anon',
+  browse: {
+    bot: "No problem at all. Have a look around the site first. When you're ready, come back here to register or sign in.",
+    action: 'explore',
   },
   'has-account': {
-    bot: "Sign in with your registered email and password below. Need help? Contact support.",
+    bot: "Use the sign-in form below with your registered email and password.",
     action: 'login',
   },
 };
@@ -118,14 +119,14 @@ function AIGuide() {
                 <UserCheck style={{ width: 14, height: 14 }} /> Register as Citizen
               </Link>
             )}
-            {current.action === 'report-anon' && (
-              <Link href="/report" className="btn btn-secondary btn-sm" style={{ justifyContent: 'center', gap: '0.4rem' }}>
-                <AlertTriangle style={{ width: 14, height: 14 }} /> File Anonymous Report
+            {current.action === 'explore' && (
+              <Link href="/" className="btn btn-secondary btn-sm" style={{ justifyContent: 'center', gap: '0.4rem' }}>
+                Browse the site
               </Link>
             )}
             {current.action === 'login' && (
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
-                ↓ Use the sign-in form below.
+                Use the sign-in form below.
               </p>
             )}
             <button onClick={back} className="ai-back-btn">← Start over</button>

@@ -96,8 +96,21 @@ class DatabaseRepository {
     }
   }
 
+  // Re-reads from disk — used in dev so newly-injected users are found without restart
+  private refreshStore(): void {
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        if (fs.existsSync(DATA_FILE)) {
+          const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+          if (parsed.users) this.store.users = parsed.users;
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
   // --- USERS ---
   public async findUserByEmail(email: string): Promise<User | null> {
+    this.refreshStore();
     const user = this.store.users.find(
       (u) => u.email.toLowerCase().trim() === email.toLowerCase().trim()
     );
@@ -105,6 +118,7 @@ class DatabaseRepository {
   }
 
   public async findUserById(id: string): Promise<User | null> {
+    this.refreshStore();
     const user = this.store.users.find((u) => u.id === id);
     return user || null;
   }

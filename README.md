@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EdSecure Hub
 
-## Getting Started
+EdSecure Hub is a web app for reporting cyber incidents and following up on a report. It includes a public information area for fraud prevention, a citizen-facing reporting and tracking flow, and a separate workspace for authority staff to review and manage complaints.
 
-First, run the development server:
+## What’s in the app
+
+- Public pages for fraud guidance, safety information, and the knowledge library
+- Account registration and login
+- Complaint submission, evidence upload, and status tracking with a reference ID and PIN
+- Authority tools for complaint queues, case details, assignments, status changes, internal notes, and summary statistics
+- API routes for authentication, complaints, authority workflows, knowledge articles, safety stations, and health checks
+
+The app is built with Next.js App Router, React, and TypeScript. Its current application data store is a local JSON file at `.data/edsecure_store.json`, initialized with sample records. PostgreSQL schema and seed files, a connection helper, and Docker Compose configuration are also included for database and deployment work. The presence of those files does not mean the current application repository is using PostgreSQL for its data operations. The background job queue currently runs in process and simulates notifications and evidence scanning; it does not send real messages or scan files with an antivirus service.
+
+## Run locally
+
+You’ll need Node.js 22 or later and npm.
 
 ```bash
+npm install
+Copy-Item .env.example .env
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+On macOS or Linux, use `cp .env.example .env` in place of `Copy-Item`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open [http://localhost:3000](http://localhost:3000) after the development server starts. The local JSON store is created under `.data/` when the app first needs it. Keep `.env` and `.data/` out of source control; `.env.example` is a configuration template, not a set of production credentials.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Configuration
 
-## Learn More
+The app reads these environment variables:
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Purpose |
+| --- | --- |
+| `JWT_SECRET` | Secret used to sign authentication sessions. Set a unique, high-entropy value outside local development. |
+| `DATABASE_URL` | PostgreSQL connection string used by the database connection helper and connection check. The current app data repository uses the local JSON store. |
+| `PORT` | Port for the web server (defaults to Next.js’ usual port when unset). |
+| `NATIONAL_HELPLINE` | Helpline number shown by the product. |
+| `PLATFORM_BASE_URL` | Public base URL used in deployment configuration. |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`REDIS_URL` appears in the Compose configuration, but the current background queue is in process and does not connect to Redis.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Useful commands
 
-## Deploy on Vercel
+```bash
+npm run dev       # Start the local development server
+npm run build     # Build the production app
+npm run start     # Serve a production build
+npm run lint      # Run ESLint
+npm run test      # Run the platform script in scripts/test-platform.ts
+npm run db:check  # Check a PostgreSQL connection using DATABASE_URL
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project layout
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+src/app/       Pages, layouts, and API routes
+src/components Shared interface components
+src/lib/       Authentication, data access, validation, and queue code
+database/      PostgreSQL schema and seed SQL
+docs/API.md    API endpoint reference
+scripts/       Database and platform utility scripts
+```
+
+## Docker
+
+The repository includes `Dockerfile` and Compose configurations. The base `docker-compose.yml` starts the app with PostgreSQL and Redis containers; review its environment values before using it, and replace the development credentials for any deployment. `docker-compose.prod.yml` is an override intended for a configured image and externally supplied secrets:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+For details on request and response shapes, see [docs/API.md](docs/API.md).
